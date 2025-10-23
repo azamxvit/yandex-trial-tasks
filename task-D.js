@@ -1,59 +1,37 @@
-module.exports = function (maps) {
-  const norm = maps.map(([x1, y1, x2, y2]) => [
-    Math.min(x1, x2),
-    Math.min(y1, y2),
-    Math.max(x1, x2),
-    Math.max(y1, y2),
-  ]);
+class Traffic {
+    constructor(initialSignal, trafficLightController) {
+        this.currentSignal = initialSignal;
+        this.listeners = [];
 
-  const n = norm.length;
-  const visited = new Array(n).fill(false);
-
-  
-  const intersects = (a, b) => {
-    const [x1, y1, x2, y2] = a;
-    const [x3, y3, x4, y4] = b;
-    return !(x2 < x3 || x4 < x1 || y2 < y3 || y4 < y1);
-  };
-
-  
-  const dfs = (i, group) => {
-    visited[i] = true;
-    group.push(i);
-    for (let j = 0; j < n; j++) {
-      if (!visited[j] && intersects(norm[i], norm[j])) {
-        dfs(j, group);
-      }
+        trafficLightController.subscribe((currentSignal) => {
+            this.currentSignal = currentSignal;
+           
+            this.listeners.forEach(check => check());
+        });
     }
-  };
 
-  const pages = [];
+    async go(direction) {
+        const canGo = () => {
+            if (this.currentSignal === 'RED') return false;
+            if (this.currentSignal === 'GREEN' && direction === 'FORWARD') return true;
+            if (this.currentSignal === 'LEFT' && direction === 'LEFT') return true;
+            if (this.currentSignal === 'RIGHT' && direction === 'RIGHT') return true;
+            return false;
+        };
 
-  for (let i = 0; i < n; i++) {
-    if (!visited[i]) {
-      const group = [];
-      dfs(i, group);
+    
+        if (canGo()) return;
 
-      
-      let minX = Infinity,
-        minY = Infinity,
-        maxX = -Infinity,
-        maxY = -Infinity;
-
-      for (const idx of group) {
-        const [x1, y1, x2, y2] = norm[idx];
-        minX = Math.min(minX, x1);
-        minY = Math.min(minY, y1);
-        maxX = Math.max(maxX, x2);
-        maxY = Math.max(maxY, y2);
-      }
-
-      pages.push({
-        box: [minX, minY, maxX, maxY],
-        indexes: group,
-      });
+        await new Promise((resolve) => {
+            const check = () => {
+                if (canGo()) {
+                    this.listeners = this.listeners.filter(l => l !== check);
+                    resolve();
+                }
+            };
+            this.listeners.push(check);
+        });
     }
-  }
+}
 
-  return pages;
-};
+exports.Traffic = Traffic;
