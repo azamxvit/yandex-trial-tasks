@@ -31,7 +31,7 @@ class Traffic {
             };
             this.listeners.push(check);
         });
-    }
+    } 
 }
 
 exports.Traffic = Traffic;
