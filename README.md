@@ -14,3 +14,9 @@
 ---
 
 ## 📁 Структура
+
+- `task-A.js`
+- `task-B.js`
+- `task-C.js`
+- `task-D.js`
+- `task-E.js`
